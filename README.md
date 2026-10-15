@@ -81,7 +81,7 @@ The program parses word banks, maps valid 5-letter English words into custom has
                          │   │   │   │   │
 Match Evaluation ────────┼───┼───┼───┼───┘
                          ▼   ▼   ▼   ▼   ▼
-               Status: [ 🟨 | 🟨 | 🟩 | 🟨 | ⬛ ]
+               Status: [ Y | Y | G | Y | - ]
 ```
 
 1. **Pass 1 (Exact Match Detection)**: Scans for exact character matches at each index (`i == j`). Matches are marked green and decremented from available letter frequency tallies.
