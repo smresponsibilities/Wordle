@@ -12,6 +12,7 @@ Live Project: [Wordle in C on Shivam Mahajan Portfolio](https://shivammahajan.co
 ---
 
 ## Table of Contents
+- [Demo](#demo)
 - [Overview](#overview)
 - [Target Audience](#target-audience)
 - [Features](#features)
@@ -28,6 +29,16 @@ Live Project: [Wordle in C on Shivam Mahajan Portfolio](https://shivammahajan.co
 - [Performance & Memory Benchmarks](#performance--memory-benchmarks)
 - [Future Scope and Improvements](#future-scope-and-improvements)
 - [Author & Connect](#author--connect)
+
+---
+
+## Demo
+
+![Terminal Wordle Gameplay Demo](images/GIFMaker_me.gif)
+*Figure 1: Terminal Wordle gameplay execution in ANSI shell.*
+
+![Wordle Terminal Output](images/image.png)
+*Figure 2: Colorized terminal feedback.*
 
 ---
 
@@ -50,9 +61,9 @@ The program parses word banks, maps valid 5-letter English words into custom has
 - **Accurate Duplicate Letter Handling**: Correctly handles duplicate letters (e.g., guessing `SPEED` when target is `ERASE`), avoiding misleading double-green highlights.
 - **Zero External Dependencies**: Pure standard C library implementation (`stdio.h`, `stdlib.h`, `string.h`, `time.h`).
 - **Color-Coded ANSI Feedback**:
-  - 🟩 **Green**: Correct letter at the exact index.
-  - 🟨 **Yellow**: Letter present in target word but incorrect position.
-  - ⬛ **Gray / Dim**: Letter not present in target word.
+  - **Green**: Correct letter at the exact index.
+  - **Yellow**: Letter present in target word but incorrect position.
+  - **Gray / Dim**: Letter not present in target word.
 - **Cross-Platform Shell Support**: Runs natively across Linux shells, macOS Terminal/iTerm, and Windows (Git Bash, Command Prompt, PowerShell).
 
 ---
