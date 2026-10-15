@@ -15,6 +15,7 @@ A low-level, high-performance terminal recreation of the Wordle word-guessing ga
 ---
 
 ## Table of Contents
+- [Where to Check (Live Demos & Architecture)](#where-to-check-live-demos--architecture)
 - [Demo](#demo)
 - [Overview](#overview)
 - [Target Audience](#target-audience)
@@ -23,6 +24,7 @@ A low-level, high-performance terminal recreation of the Wordle word-guessing ga
   - [Algorithmic Guess Evaluation](#algorithmic-guess-evaluation)
   - [ANSI Escape Rendering Pipeline](#ansi-escape-rendering-pipeline)
 - [File Structure](#file-structure)
+- [Native C Hosting & WebAssembly](#native-c-hosting--webassembly)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Compilation](#compilation)
@@ -32,6 +34,17 @@ A low-level, high-performance terminal recreation of the Wordle word-guessing ga
 - [Performance & Memory Benchmarks](#performance--memory-benchmarks)
 - [Future Scope and Improvements](#future-scope-and-improvements)
 - [Author & Connect](#author--connect)
+
+---
+
+## Where to Check (Live Demos & Architecture)
+
+- **Interactive In-Browser Simulator & Call Pipeline**: [https://shivammahajan.com/wordle-simulator/](https://shivammahajan.com/wordle-simulator/)
+  - Direct execution of the native WebAssembly engine (`web/wordle.wasm`) client-side.
+  - Sticky side-by-side execution call tree tracking `fgets()`, `checkAlpha()`, `hashfunction2()`, and two-pass `wordColoring()`.
+- **Portfolio Architectural Case Study**: [https://shivammahajan.com/projects/wordle/](https://shivammahajan.com/projects/wordle/)
+  - Technical analysis of $O(1)$ polynomial modulo hashing, two-pass frequency arrays, and ANSI rendering pipelines.
+- **Projects Directory**: [https://shivammahajan.com/projects/](https://shivammahajan.com/projects/)
 
 ---
 
@@ -108,11 +121,46 @@ Wordle/
 │   ├── maintest.c      # Unit test runner
 │   ├── testwordcheck.c # Guess evaluation assertions
 │   └── testhash.c      # Hash collision and lookup tests
+├── web/
+│   ├── index.html      # Interactive browser simulator with sticky live call tree
+│   ├── wordle.wasm     # Compiled native WebAssembly binary (2.4 KB)
+│   └── wordle-words.json # 9,077-word dictionary bank
 ├── wordle.c            # Main game entry point and interactive loop
 ├── wordle.sh           # Linux/macOS build & execution script
 ├── wordle.bat          # Windows batch build script
 └── README.md
 ```
+
+---
+
+## Native C Hosting & WebAssembly
+
+Can pure C applications be deployed and served on the modern web? Yes, via two primary production models:
+
+### 1. Client-Side WebAssembly (Wasm) [Recommended for Static CDN]
+
+Compile standard C source directly to standalone WebAssembly bytecode using Emscripten:
+
+```bash
+emcc wordle.c src/randomindex.c src/wordcheck.c src/hash.c src/color.c \
+  -Iinclude -s WASM=1 -o web/wordle.wasm
+```
+
+- **Execution Model**: Runs directly inside the browser's WebAssembly sandbox.
+- **Hosting Cost**: $0 (hosted statically on GitHub Pages, Vercel, or any CDN).
+- **Setup Required**: Zero. No local compiler or terminal required for players.
+
+### 2. Server-Side Native Linux Container + PTY [Authentic POSIX Terminal]
+
+Compile native stripped ELF binaries via GCC:
+
+```bash
+gcc -O3 wordle.c src/randomindex.c src/wordcheck.c src/hash.c src/color.c \
+  -Iinclude -o wordle -lm && strip wordle
+```
+
+- **Execution Model**: Runs inside a Docker container with standard I/O attached to `node-pty` / `ttyd`.
+- **Browser Client**: Streams raw keystrokes over WebSockets; `xterm.js` renders native ANSI escape codes in real time.
 
 ---
 
