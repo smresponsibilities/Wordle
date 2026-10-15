@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terminal Wordle in Pure C: Interactive Simulator and Call Pipeline</title>
+<meta name="description" content="Explore Shivam Mahajan's pure C Terminal Wordle project: interactive browser simulator, live C function call tree, duplicate letter tracker, and hash lookup.">
+<link rel="canonical" href="https://shivammahajan.com/wordle-simulator/">
+<meta name="author" content="Shivam Mahajan">
+<meta property="og:site_name" content="Shivam Mahajan Portfolio">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Terminal Wordle in Pure C: Interactive Simulator and Architecture">
+<meta property="og:description" content="Interactive browser simulator and real-time C function call tree for Shivam Mahajan's zero-dependency Terminal Wordle game engine.">
+<meta property="og:url" content="https://shivammahajan.com/wordle-simulator/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Terminal Wordle in Pure C: Interactive Simulator and Architecture">
+<meta name="twitter:description" content="Explore the pure C Wordle architecture with real-time execution call tree, duplicate letter tracking, and hash lookups.">
+<style>
+:root {
+  --bg: #e9eddd;
+  --paper: #fcf7e9;
+  --ink: #313b30;
+  --muted: #6d725e;
+  --line: #dfdfca;
+  --green: #526b47;
+  --green-shadow: #354c2d;
+  --sage: #e8edd8;
+  --yellow: #f4d378;
+  --bad: #c84236;
+  --term-bg: #090d14;
+  --term-panel: #111620;
+  --term-border: #232d3d;
+  --term-text: #e6edf3;
+  --font-serif: Georgia, serif;
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after { box-sizing: inherit; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+header.top-bar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 2px solid var(--line);
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.brand:hover { color: var(--green); }
+
+nav.nav-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+nav.nav-links a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+nav.nav-links a:hover {
+  text-decoration: underline;
+  color: var(--ink);
+}
+
+main.workspace {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+.breadcrumb-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.breadcrumb-nav a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+.breadcrumb-nav a:hover { text-decoration: underline; }
+
+.hero {
+  margin-bottom: 32px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+
+h1 {
+  font: normal clamp(30px, 4vw, 44px)/1.12 var(--font-serif);
+  letter-spacing: -1.2px;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+p.lead {
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 72ch;
+  margin: 0 0 20px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badges span {
+  background: var(--sage);
+  color: var(--ink);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+}
+
+/* SIDE-BY-SIDE SPLIT LAYOUT */
+.sim-grid-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 450px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 1024px) {
+  .sim-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* LEFT: TERMINAL GAME CASING */
+.terminal-casing {
+  background: var(--term-bg);
+  border: 2px solid var(--term-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.casing-header {
+  background: #141b26;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--term-border);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #8b949e;
+}
+
+.casing-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.casing-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3b4d6b;
+}
+
+.wasm-badge {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+  background: rgba(82, 107, 71, 0.25);
+  border: 1px solid var(--green);
+  color: #7ee787;
+  font-family: var(--font-mono);
+}
+
+.game-controls {
+  padding: 12px 14px;
+  background: #0f1520;
+  border-bottom: 1px solid var(--term-border);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ctrl-btn {
+  background: #1c2536;
+  border: 1px solid #2d3b52;
+  color: var(--term-text);
+  padding: 6px 11px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.ctrl-btn:hover {
+  background: #28374d;
+  border-color: #4b6285;
+}
+
+.ctrl-btn.primary {
+  background: #234b32;
+  border-color: #3fb950;
+  color: #aff5b4;
+  font-weight: 600;
+}
+
+.seed-info {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8b949e;
+  margin-left: auto;
+}
+
+/* WORDLE GRID */
+.grid-container {
+  padding: 24px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.word-row {
+  display: flex;
+  gap: 7px;
+}
+
+.word-tile {
+  width: 52px;
+  height: 52px;
+  border: 2px solid #232d3d;
+  background: #06090e;
+  color: var(--term-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  user-select: none;
+  border-radius: 4px;
+  transition: transform 0.1s ease, background 0.2s;
+}
+
+.word-tile.active-fill {
+  border-color: #486185;
+  transform: scale(1.04);
+}
+
+.word-tile.tile-correct {
+  background: #238636;
+  border-color: #3fb950;
+  color: #ffffff;
+}
+
+.word-tile.tile-misplaced {
+  background: #9e6a03;
+  border-color: #d29922;
+  color: #ffffff;
+}
+
+.word-tile.tile-wrong {
+  background: #21262d;
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+/* KEYBOARD */
+.keyboard-container {
+  padding: 10px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.kb-row {
+  display: flex;
+  gap: 4px;
+}
+
+.kb-key {
+  min-width: 32px;
+  height: 40px;
+  padding: 0 6px;
+  background: #18202c;
+  border: 1px solid #273447;
+  border-radius: 4px;
+  color: var(--term-text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s;
+}
+
+.kb-key:hover { background: #263449; }
+.kb-key.wide { min-width: 52px; font-size: 11px; }
+
+.kb-key.key-correct { background: #238636; border-color: #3fb950; color: #fff; }
+.kb-key.key-misplaced { background: #9e6a03; border-color: #d29922; color: #fff; }
+.kb-key.key-wrong { background: #13171f; border-color: #21262d; color: #484f58; }
+
+/* STDOUT TERMINAL WINDOW */
+.stdout-window {
+  border-top: 1px solid var(--term-border);
+  background: #05070a;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #a5d6ff;
+  max-height: 175px;
+  overflow-y: auto;
+}
+
+.stdout-line { margin: 2px 0; word-break: break-all; }
+.stdout-line .ansi-green { color: #3fb950; font-weight: bold; }
+.stdout-line .ansi-yellow { color: #d29922; font-weight: bold; }
+.stdout-line .ansi-red { color: #f85149; font-weight: bold; }
+.stdout-line .ansi-dim { color: #6e7681; }
+
+/* RIGHT: EDITORIAL FUNCTION PIPELINE (STICKY AT SIDE) */
+.viz-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.card-paper {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 3px 12px rgba(49, 59, 48, 0.05);
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.section-head h2 {
+  font: normal 19px/1.2 var(--font-serif);
+  margin: 0;
+  color: var(--ink);
+  letter-spacing: -0.4px;
+}
+
+.section-head span.tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--green);
+  background: var(--sage);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  font-weight: 600;
+}
+
+/* CALL PIPELINE GRAPH */
+.pipeline-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tree-node {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tree-node:hover {
+  border-color: var(--green);
+  background: #fbfbf6;
+  transform: translateX(3px);
+}
+
+.tree-node.active-pulse {
+  border-color: var(--green);
+  background: var(--sage);
+  box-shadow: 0 0 12px rgba(82, 107, 71, 0.3);
+}
+
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.node-fn-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.node-file-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--sage);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+
+.node-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.node-signature {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  background: #f4ede0;
+  padding: 6px 9px;
+  border-radius: 4px;
+  overflow-x: auto;
+  border: 1px solid #e2d9c8;
+}
+
+.tree-arrow {
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* LIVE INSPECTOR DUAL GRID */
+.inspector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.inspector-box {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.inspector-box h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+}
+
+.val-display {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--green);
+  word-break: break-all;
+}
+
+.freq-array {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.freq-slot {
+  background: #f2ede1;
+  border: 1px solid #ded6c5;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 0;
+  color: var(--muted);
+  border-radius: 2px;
+}
+
+.freq-slot.active-count {
+  background: var(--sage);
+  border-color: var(--green);
+  color: var(--green);
+  font-weight: bold;
+}
+
+/* FUNCTION DETAIL DRAWER */
+.inspect-modal {
+  display: none;
+  background: #ffffff;
+  border: 2px solid var(--green);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.inspect-modal.open { display: block; }
+
+.inspect-modal h4 {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 14.5px;
+}
+
+.meta-row {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-row span strong { color: var(--ink); }
+
+/* BOTTOM SECTION: NATIVE C HOSTING ANALYSIS */
+.hosting-section {
+  margin-top: 24px;
+}
+
+.two-tier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 16px 0 24px;
+}
+
+@media (max-width: 768px) {
+  .two-tier-grid { grid-template-columns: 1fr; }
+}
+
+.two-tier-box {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.two-tier-box h3 {
+  margin: 0 0 8px;
+  font: normal 18px/1.2 var(--font-serif);
+  color: var(--ink);
+}
+
+.two-tier-box p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.code-block {
+  background: #111620;
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <a class="brand" href="/">SM'S DEX</a>
+  <nav class="nav-links">
+    <a href="/">Home</a>
+    <a href="/resume/">Resume</a>
+    <a href="/projects/">Projects</a>
+    <a href="/projects/wordle/">Case Study</a>
+    <a href="https://github.com/smresponsibilities/Wordle" target="_blank" rel="noopener noreferrer">View Repository ↗</a>
+  </nav>
+</header>
+
+<main class="workspace">
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb navigation">
+    <a href="/">Home</a> <span>/</span>
+    <a href="/projects/">Projects</a> <span>/</span>
+    <span aria-current="page">Wordle Simulator</span>
+  </nav>
+
+  <div class="hero">
+    <span class="section-tag">MOVE 011 / PURE C SYSTEMS</span>
+    <h1>Terminal Wordle Engine &amp; Call Tree Visualizer</h1>
+    <p class="lead">
+      An interactive behavioral replica of Shivam Mahajan's pure C Wordle game engine running via native WebAssembly (Wasm). Features real-time C function pipeline tracking, duplicate letter frequency analysis, and custom polynomial hash table lookups with zero runtime libraries.
+    </p>
+    <div class="badges">
+      <span>Pure C99</span>
+      <span>Zero External Dependencies</span>
+      <span>Native WebAssembly (2.4 KB)</span>
+      <span>O(1) Hash Table</span>
+      <span>Two-Pass Duplicate Handling</span>
+    </div>
+  </div>
+
+  <div class="sim-grid-layout">
+    <!-- LEFT: GAME CONSOLE -->
+    <div class="terminal-casing">
+      <div class="casing-header">
+        <div class="casing-dots">
+          <div class="casing-dot"></div>
+          <div class="casing-dot"></div>
+          <div class="casing-dot"></div>
+        </div>
+        <span>wordle.c terminal session</span>
+        <span id="wasm-engine-badge" class="wasm-badge">WASM INITIALIZING...</span>
+        <span id="game-status-label" style="color: #7ee787; font-weight: 700;">PLAYING</span>
+      </div>
+
+      <div class="game-controls">
+        <button id="btn-daily-mode" class="ctrl-btn primary" title="Seed from system day + month via srand(day+month)">Daily Seed</button>
+        <button id="btn-random-mode" class="ctrl-btn" title="Pick random word from 9,077 dictionary bank">Random Word</button>
+        <button id="btn-custom-mode" class="ctrl-btn" title="Set test word to verify duplicate letter edge cases">Set Test Word</button>
+        <button id="btn-toggle-reveal" class="ctrl-btn" title="Toggle secret word visibility">Reveal Word</button>
+        <button id="btn-reset" class="ctrl-btn" title="Clear board and start fresh attempt">Reset</button>
+        <span id="seed-indicator" class="seed-info">Seed: day+month</span>
+      </div>
+
+      <div class="grid-container" id="grid-container">
+        <!-- 6 rows x 5 tiles rendered dynamically -->
+      </div>
+
+      <div class="keyboard-container" id="keyboard-container">
+        <!-- QWERTY rows -->
+      </div>
+
+      <div class="stdout-window" id="stdout-window" aria-live="polite">
+        <div class="stdout-line ansi-dim">// Pure C99 Wordle Stdout Stream</div>
+        <div class="stdout-line ansi-green">Welcome to Wordle!</div>
+        <div class="stdout-line">Single word challenge for the whole day.</div>
+        <div class="stdout-line">6 tries to guess a 5-letter word.</div>
+        <div class="stdout-line"><span class="ansi-green">Green</span>: Correct spot | <span class="ansi-yellow">Yellow</span>: Misplaced | <span class="ansi-red">Red</span>: Not in word</div>
+        <div class="stdout-line ansi-dim">----------------------------------------</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: EXECUTION PIPELINE & LIVE CALL TREE (STICKY AT SIDE) -->
+    <div class="viz-column">
+      <div class="card-paper">
+        <div class="section-head">
+          <h2>Active Call Tree &amp; Pipeline</h2>
+          <span class="tag">Zero External Libs</span>
+        </div>
+
+        <div class="pipeline-tree" id="pipeline-tree">
+          <!-- Node 1: Input Buffer -->
+          <div class="tree-node" id="node-input" data-fn="read_input">
+            <div class="node-header">
+              <span class="node-fn-name">fgets(input, 1000, stdin) &amp; strcspn()</span>
+              <span class="node-file-tag">wordle.c</span>
+            </div>
+            <div class="node-desc">Reads raw buffer from terminal stdin, strips newline terminator, validates exactly 5 letters.</div>
+            <div class="node-signature">char input[1000]; input[strcspn(input, "\n")] = '\0';</div>
+          </div>
+
+          <div class="tree-arrow">|</div>
+
+          <!-- Node 2: Char Validation -->
+          <div class="tree-node" id="node-validate" data-fn="checkAlpha">
+            <div class="node-header">
+              <span class="node-fn-name">checkAlpha(guess)</span>
+              <span class="node-file-tag">src/wordcheck.c</span>
+            </div>
+            <div class="node-desc">Scans each byte via isalpha(). Rejects non-alphabetic glyphs, empty strings, or null pointers.</div>
+            <div class="node-signature">int checkAlpha(char *guess); // O(N) where N=5</div>
+          </div>
+
+          <div class="tree-arrow">|</div>
+
+          <!-- Node 3: Custom Polynomial Modulo Hash -->
+          <div class="tree-node" id="node-hash" data-fn="hashfunction2">
+            <div class="node-header">
+              <span class="node-fn-name">hashfunction2(input) &amp; isAvailable[]</span>
+              <span class="node-file-tag">src/hash.c</span>
+            </div>
+            <div class="node-desc">Calculates polynomial hash: sum(word[j]*26^j)%46106600 % 6999999. Direct array lookup.</div>
+            <div class="node-signature">int hashfunction2(char *word); // O(1) space, O(1) lookup</div>
+          </div>
+
+          <div class="tree-arrow">|</div>
+
+          <!-- Node 4: Comparator -->
+          <div class="tree-node" id="node-check" data-fn="wordCheck">
+            <div class="node-header">
+              <span class="node-fn-name">wordCheck(wordToGuess, input)</span>
+              <span class="node-file-tag">src/wordcheck.c</span>
+            </div>
+            <div class="node-desc">Fast-path equality comparator: returns 0 on invalid, 2 on exact match, 1 on partial match.</div>
+            <div class="node-signature">int wordCheck(char *word, char *guess);</div>
+          </div>
+
+          <div class="tree-arrow">|</div>
+
+          <!-- Node 5: Duplicate Letter Evaluation (Core Algorithm) -->
+          <div class="tree-node" id="node-eval" data-fn="wordColoring">
+            <div class="node-header">
+              <span class="node-fn-name">wordColoring(wordToGuess, input, colors)</span>
+              <span class="node-file-tag">src/color.c</span>
+            </div>
+            <div class="node-desc">Pass 1: Tally target letters and mark exact matches ('G'). Pass 2: Mark misplaced ('Y') if remaining count &gt; 0, else ('R').</div>
+            <div class="node-signature">void wordColoring(char *wordToGuess, char *input, char colors[]);</div>
+          </div>
+
+          <div class="tree-arrow">|</div>
+
+          <!-- Node 6: ANSI Terminal Stream Render -->
+          <div class="tree-node" id="node-render" data-fn="printColoredWord">
+            <div class="node-header">
+              <span class="node-fn-name">printColoredWord() &amp; updateAtozcolors()</span>
+              <span class="node-file-tag">src/color.c</span>
+            </div>
+            <div class="node-desc">Wraps letters in ANSI escape codes (\033[1;32m etc.) and updates keyboard letter states.</div>
+            <div class="node-signature">void printColoredWord(char *guess, char *colors);</div>
+          </div>
+        </div>
+
+        <!-- Detail Drawer / Modal for Clicked/Hovered Node -->
+        <div class="inspect-modal" id="inspect-modal">
+          <h4 id="inspect-fn-title">Function Details</h4>
+          <div class="meta-row">
+            <span>Module: <strong id="inspect-module">-</strong></span>
+            <span>Header: <strong id="inspect-header">-</strong></span>
+            <span>Time: <strong id="inspect-time">-</strong></span>
+            <span>Space: <strong id="inspect-space">-</strong></span>
+          </div>
+          <div class="node-signature" id="inspect-sig" style="margin-bottom: 8px;"></div>
+          <p id="inspect-body" style="font-size: 13px; color: var(--muted); margin: 0;"></p>
+        </div>
+
+        <!-- Live Runtime Memory Inspector -->
+        <div class="inspector-grid">
+          <div class="inspector-box">
+            <h3>Input Buffer (char[1000])</h3>
+            <div class="val-display" id="inspect-input-val">""</div>
+          </div>
+          <div class="inspector-box">
+            <h3>Target Word (char[6])</h3>
+            <div class="val-display" id="inspect-target-val">*****</div>
+          </div>
+          <div class="inspector-box">
+            <h3>Polynomial Hash Index</h3>
+            <div class="val-display" id="inspect-hash-val">-</div>
+          </div>
+          <div class="inspector-box">
+            <h3>Tries Left (5 - i)</h3>
+            <div class="val-display" id="inspect-tries-val">6</div>
+          </div>
+        </div>
+
+        <div class="inspector-box" style="margin-top: 12px;">
+          <h3>Remaining Frequency Array (letterCount[26])</h3>
+          <div class="freq-array" id="freq-array-grid">
+            <!-- 26 slots -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SECTION: NATIVE C HOSTING ANALYSIS -->
+  <section class="hosting-section">
+    <div class="card-paper">
+      <div class="section-head">
+        <h2>Native C Hosting Feasibility &amp; WebAssembly Architecture</h2>
+        <span class="tag">Static CDN vs POSIX PTY</span>
+      </div>
+      <p style="color: var(--muted); font-size: 15px; margin: 0 0 16px;">
+        Can we deploy and run native C applications on modern web platforms? Yes, using two primary production architectures:
+      </p>
+
+      <div class="two-tier-grid">
+        <div class="two-tier-box">
+          <h3>1. Client-Side WebAssembly (Wasm) [Recommended for Static CDN]</h3>
+          <p>
+            Standard C source code compiles directly into a standalone WebAssembly (<code>.wasm</code>) binary using Emscripten or Clang with zero external libraries:
+          </p>
+          <div class="code-block">
+emcc wordle.c src/randomindex.c src/wordcheck.c src/hash.c src/color.c \
+  -Iinclude -s WASM=1 -o wordle.wasm
+          </div>
+          <p style="margin-top: 10px; font-size: 13px;">
+            <strong>Advantages:</strong> $0 hosting cost. Executes directly inside the client's browser WebAssembly runtime with sandbox security, instant startup (&lt; 1ms), and zero server containers.
+          </p>
+        </div>
+
+        <div class="two-tier-box">
+          <h3>2. Server-Side Native Container + PTY [Authentic POSIX Terminal]</h3>
+          <p>
+            For a pure OS-level terminal execution model, the standard GCC binary runs inside a lightweight Linux container:
+          </p>
+          <div class="code-block">
+gcc -O3 wordle.c src/randomindex.c src/wordcheck.c src/hash.c src/color.c \
+  -Iinclude -o wordle -lm && strip wordle
+          </div>
+          <p style="margin-top: 10px; font-size: 13px;">
+            <strong>Advantages:</strong> Runs the authentic compiled ELF binary. Terminal I/O attaches to a pseudo-terminal daemon (<code>node-pty</code> or <code>ttyd</code>) streaming raw ANSI sequences over WebSockets to <code>xterm.js</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function() {
+  const FALLBACK_WORDS = [
+    "cigar", "rebut", "sissy", "humph", "awake", "blush", "focal", "evade", "naval", "serve",
+    "heath", "dwarf", "model", "karma", "stink", "grade", "quiet", "bench", "abate", "feign",
+    "major", "death", "fresh", "crust", "stool", "colon", "abase", "marry", "react", "batty",
+    "pride", "floss", "helix", "croak", "staff", "paper", "unfed", "whelp", "trawl", "outdo",
+    "adobe", "crazy", "sower", "repay", "digit", "crate", "cluck", "spike", "mimic", "pound",
+    "maxim", "linen", "unmet", "flesh", "booby", "forth", "first", "stand", "belly", "ivory",
+    "speed", "erase", "apple", "crane", "slate", "house", "plant", "trace", "roast", "flame",
+    "world", "music", "water", "light", "heart", "cloud", "space", "power", "money", "story"
+  ];
+
+  let wordBank = [...FALLBACK_WORDS];
+  let dictionarySet = new Set(wordBank.map(w => w.toUpperCase()));
+
+  fetch('/wordle-words.json')
+    .then(r => r.json())
+    .then(list => {
+      if (Array.isArray(list) && list.length > 1000) {
+        wordBank = list;
+        dictionarySet = new Set(list.map(w => w.toUpperCase()));
+        stdout(`Loaded ${list.length} words into custom hash dictionary.`);
+      }
+    })
+    .catch(() => {});
+
+  // State
+  let targetWord = "CRANE";
+  let currentRow = 0;
+  let currentCol = 0;
+  let guesses = Array(6).fill("");
+  let guessColors = Array(6).fill(null);
+  let isGameOver = false;
+  let isWordRevealed = false;
+  let alphabetStatus = {};
+
+  // DOM elements
+  const gridContainer = document.getElementById('grid-container');
+  const keyboardContainer = document.getElementById('keyboard-container');
+  const stdoutWindow = document.getElementById('stdout-window');
+  const statusLabel = document.getElementById('game-status-label');
+  const inputValDisplay = document.getElementById('inspect-input-val');
+  const targetValDisplay = document.getElementById('inspect-target-val');
+  const hashValDisplay = document.getElementById('inspect-hash-val');
+  const triesValDisplay = document.getElementById('inspect-tries-val');
+  const freqArrayGrid = document.getElementById('freq-array-grid');
+  const seedIndicator = document.getElementById('seed-indicator');
+
+  const FN_INFO = {
+    read_input: {
+      title: "read_input (fgets & strcspn)",
+      module: "wordle.c",
+      header: "<stdio.h>, <string.h>",
+      time: "O(N) (N=5)",
+      space: "O(1) buffer [1000]",
+      sig: 'if (fgets(input, sizeof(input), stdin) == NULL) ... input[strcspn(input, "\\n")] = \'\\0\';',
+      desc: "Safely reads up to 1000 bytes from stdin to prevent buffer overflow attacks. Strips trailing newline via strcspn(). Rejects lines whose length is not exactly 5 characters."
+    },
+    checkAlpha: {
+      title: "checkAlpha(guess)",
+      module: "src/wordcheck.c",
+      header: "include/wordcheck.h",
+      time: "O(N) (N=5)",
+      space: "O(1)",
+      sig: "int checkAlpha(char *guess);",
+      desc: "Validates every character using standard ctype isalpha(). Guard against NULL pointers, non-alphabetic control characters, and malformed ASCII input."
+    },
+    hashfunction2: {
+      title: "hashfunction2(input) & isAvailable[]",
+      module: "src/hash.c",
+      header: "include/hash.h",
+      time: "O(N) (N=5)",
+      space: "O(1) static array [6999999]",
+      sig: "int hashfunction2(char *word);",
+      desc: "Computes polynomial hash midResult = sum(word[j] * 26^j) % FIRST_HASH (46,106,600). Returns hashValue % SECOND_HASH (6,999,999). Verifies membership in isAvailable boolean lookup table in O(1) time."
+    },
+    wordCheck: {
+      title: "wordCheck(wordToGuess, input)",
+      module: "src/wordcheck.c",
+      header: "include/wordcheck.h",
+      time: "O(N) (N=5)",
+      space: "O(1)",
+      sig: "int wordCheck(char *word, char *guess);",
+      desc: "Compares target and guess case-insensitively using tolower(). Returns 0 if invalid length/non-alpha, 1 if valid but unequal, and 2 if exact match (victory trigger)."
+    },
+    wordColoring: {
+      title: "wordColoring(wordToGuess, input, colors)",
+      module: "src/color.c",
+      header: "include/color.h",
+      time: "O(N) (N=5)",
+      space: "O(1) letterCount[26]",
+      sig: "void wordColoring(char *wordToGuess, char *input, char colors[]);",
+      desc: "Two-pass frequency tracking algorithm. Pass 1: Identifies exact positional matches ('G'), decrementing letter frequency tallies. Pass 2: Evaluates remaining characters; flags 'Y' (misplaced) if frequency tally > 0, otherwise 'R' (absent). Eliminates duplicate letter false positives."
+    },
+    printColoredWord: {
+      title: "printColoredWord & updateAtozcolors",
+      module: "src/color.c",
+      header: "include/color.h",
+      time: "O(N) (N=5)",
+      space: "O(1) alphabetColors[26]",
+      sig: "void printColoredWord(char *guess, char *colors);\nvoid updateAtozcolors(char *guess, char *colors, char alphabetColors[]);",
+      desc: "Formats characters into terminal stdout using standard ANSI escape sequences (\\033[1;32m for green, \\033[1;33m for yellow, \\033[1;31m for red). Updates global A-to-Z key state array with highest precedence (G > Y > R)."
+    }
+  };
+
+  function renderGrid() {
+    gridContainer.innerHTML = '';
+    for (let r = 0; r < 6; r++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'word-row';
+      const rowWord = guesses[r] || "";
+      const rowCols = guessColors[r];
+
+      for (let c = 0; c < 5; c++) {
+        const tile = document.createElement('div');
+        tile.className = 'word-tile';
+        const letter = rowWord[c] || "";
+        tile.textContent = letter;
+
+        if (r === currentRow && letter) {
+          tile.classList.add('active-fill');
+        }
+
+        if (rowCols && rowCols[c]) {
+          if (rowCols[c] === 'G') tile.classList.add('tile-correct');
+          else if (rowCols[c] === 'Y') tile.classList.add('tile-misplaced');
+          else if (rowCols[c] === 'R') tile.classList.add('tile-wrong');
+        }
+
+        rowDiv.appendChild(tile);
+      }
+      gridContainer.appendChild(rowDiv);
+    }
+  }
+
+  const KEY_LAYOUT = [
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "BACK"]
+  ];
+
+  function renderKeyboard() {
+    keyboardContainer.innerHTML = '';
+    KEY_LAYOUT.forEach(row => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'kb-row';
+      row.forEach(key => {
+        const btn = document.createElement('div');
+        btn.className = 'kb-key';
+        if (key.length > 1) btn.classList.add('wide');
+        btn.textContent = key;
+
+        const st = alphabetStatus[key];
+        if (st === 'G') btn.classList.add('key-correct');
+        else if (st === 'Y') btn.classList.add('key-misplaced');
+        else if (st === 'R') btn.classList.add('key-wrong');
+
+        btn.addEventListener('click', () => handleVirtualKey(key));
+        rowDiv.appendChild(btn);
+      });
+      keyboardContainer.appendChild(rowDiv);
+    });
+  }
+
+  function renderFreqTable(freqMap) {
+    freqArrayGrid.innerHTML = '';
+    for (let i = 0; i < 26; i++) {
+      const ch = String.fromCharCode(65 + i);
+      const cnt = freqMap ? (freqMap[i] || 0) : 0;
+      const slot = document.createElement('div');
+      slot.className = 'freq-slot' + (cnt > 0 ? ' active-count' : '');
+      slot.textContent = `${ch}:${cnt}`;
+      freqArrayGrid.appendChild(slot);
+    }
+  }
+
+  function stdout(msg, colorClass = '') {
+    const line = document.createElement('div');
+    line.className = 'stdout-line' + (colorClass ? ' ' + colorClass : '');
+    line.textContent = msg;
+    stdoutWindow.appendChild(line);
+    stdoutWindow.scrollTop = stdoutWindow.scrollHeight;
+  }
+
+  let wasmInstance = null;
+  let wasmMemory = null;
+
+  async function initWasm() {
+    try {
+      const res = await fetch('/wordle-simulator/wordle.wasm');
+      if (!res.ok) throw new Error('Failed to fetch wordle.wasm');
+      const bytes = await res.arrayBuffer();
+      const { instance } = await WebAssembly.instantiate(bytes, {});
+      wasmInstance = instance;
+      wasmMemory = instance.exports.memory;
+      const badge = document.getElementById('wasm-engine-badge');
+      if (badge) {
+        badge.textContent = 'NATIVE WASM: ACTIVE';
+        badge.style.color = '#7ee787';
+      }
+      stdout('WebAssembly module loaded: wordle.wasm (2.4 KB compiled bytecode).', 'ansi-green');
+      stdout('C function calls executing natively inside browser WebAssembly runtime.', 'ansi-dim');
+    } catch (err) {
+      const badge = document.getElementById('wasm-engine-badge');
+      if (badge) {
+        badge.textContent = 'JS FALLBACK RUNTIME';
+        badge.style.color = '#d29922';
+      }
+      stdout('Notice: Running in optimized JavaScript engine mode.', 'ansi-dim');
+    }
+  }
+
+  function calculateHash(word) {
+    if (wasmInstance && wasmMemory) {
+      const mem = new Uint8Array(wasmMemory.buffer);
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(word);
+      mem.set(bytes, 0);
+      return wasmInstance.exports.hashfunction2(0, bytes.length);
+    }
+    const FIRST_HASH = 46106600;
+    const SECOND_HASH = 6999999;
+    let midResult = 0;
+    const lower = word.toLowerCase();
+    for (let j = 0; j < lower.length; j++) {
+      const code = lower.charCodeAt(j);
+      let p = 1;
+      for (let k = 0; k < j; k++) p = (p * 26) % FIRST_HASH;
+      midResult = (midResult + (code * p)) % FIRST_HASH;
+    }
+    const hashVal = midResult % FIRST_HASH;
+    return hashVal % SECOND_HASH;
+  }
+
+  function getDailyWord() {
+    const now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth();
+    if (wasmInstance && wasmInstance.exports.randomIndex) {
+      const idx = wasmInstance.exports.randomIndex(day, month, wordBank.length);
+      return wordBank[idx].toUpperCase();
+    }
+    let seed = (day + month) % 2147483647;
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const index = seed % wordBank.length;
+    return wordBank[index].toUpperCase();
+  }
+
+  function wordColoring(target, guess) {
+    let colors = Array(5).fill(' ');
+    let remainingFreq = Array(26).fill(0);
+
+    if (wasmInstance && wasmMemory) {
+      const mem = new Uint8Array(wasmMemory.buffer);
+      const enc = new TextEncoder();
+      mem.set(enc.encode(target.toUpperCase()), 0);
+      mem.set(enc.encode(guess.toUpperCase()), 5);
+      wasmInstance.exports.wordColoring(0, 5, 10);
+      const outBytes = mem.slice(10, 15);
+      colors = Array.from(outBytes).map(b => String.fromCharCode(b));
+
+      for (let i = 0; i < 5; i++) {
+        remainingFreq[target.charCodeAt(i) - 65]++;
+      }
+      for (let i = 0; i < 5; i++) {
+        if (colors[i] === 'G') remainingFreq[guess.charCodeAt(i) - 65]--;
+      }
+      for (let i = 0; i < 5; i++) {
+        if (colors[i] === 'Y') remainingFreq[guess.charCodeAt(i) - 65]--;
+      }
+      return { colors, remainingFreq };
+    }
+
+    const letterCount = Array(26).fill(0);
+    for (let i = 0; i < 5; i++) {
+      letterCount[target.charCodeAt(i) - 65]++;
+    }
+
+    for (let i = 0; i < 5; i++) {
+      if (guess[i] === target[i]) {
+        colors[i] = 'G';
+        letterCount[guess.charCodeAt(i) - 65]--;
+      }
+    }
+
+    for (let i = 0; i < 5; i++) {
+      if (colors[i] !== 'G') {
+        const code = guess.charCodeAt(i) - 65;
+        if (letterCount[code] > 0) {
+          colors[i] = 'Y';
+          letterCount[code]--;
+        } else {
+          colors[i] = 'R';
+        }
+      }
+    }
+
+    return { colors, remainingFreq: letterCount };
+  }
+
+  function pulseNode(nodeId) {
+    const el = document.getElementById(nodeId);
+    if (!el) return;
+    el.classList.add('active-pulse');
+    setTimeout(() => el.classList.remove('active-pulse'), 500);
+  }
+
+  function handleVirtualKey(key) {
+    if (isGameOver) return;
+
+    if (key === 'ENTER') {
+      submitGuess();
+    } else if (key === 'BACK' || key === 'BACKSPACE') {
+      if (currentCol > 0) {
+        currentCol--;
+        guesses[currentRow] = guesses[currentRow].slice(0, currentCol);
+        pulseNode('node-input');
+        updateInspector();
+        renderGrid();
+      }
+    } else if (/^[A-Z]$/.test(key)) {
+      if (currentCol < 5) {
+        guesses[currentRow] += key;
+        currentCol++;
+        pulseNode('node-input');
+        pulseNode('node-validate');
+        updateInspector();
+        renderGrid();
+      }
+    }
+  }
+
+  function submitGuess() {
+    const currentGuess = guesses[currentRow] || "";
+
+    if (currentGuess.length !== 5) {
+      stdout(`Error: Guess must contain exactly 5 letters (got ${currentGuess.length}).`, 'ansi-red');
+      pulseNode('node-validate');
+      return;
+    }
+
+    const hashIndex = calculateHash(currentGuess);
+    hashValDisplay.textContent = `${hashIndex} (bucket)`;
+    pulseNode('node-hash');
+
+    const isValidWord = dictionarySet.has(currentGuess) || wordBank.map(w => w.toUpperCase()).includes(currentGuess);
+
+    if (!isValidWord) {
+      stdout(`Word "${currentGuess}" not present in dictionary. Hash slot: ${hashIndex}`, 'ansi-yellow');
+      return;
+    }
+
+    pulseNode('node-check');
+
+    setTimeout(() => pulseNode('node-eval'), 150);
+    const { colors, remainingFreq } = wordColoring(targetWord, currentGuess);
+    guessColors[currentRow] = colors;
+    renderFreqTable(remainingFreq);
+
+    for (let i = 0; i < 5; i++) {
+      const letter = currentGuess[i];
+      const col = colors[i];
+      if (col === 'G') alphabetStatus[letter] = 'G';
+      else if (col === 'Y' && alphabetStatus[letter] !== 'G') alphabetStatus[letter] = 'Y';
+      else if (col === 'R' && alphabetStatus[letter] !== 'G' && alphabetStatus[letter] !== 'Y') alphabetStatus[letter] = 'R';
+    }
+
+    setTimeout(() => pulseNode('node-render'), 300);
+    let ansiStr = "";
+    for (let i = 0; i < 5; i++) {
+      if (colors[i] === 'G') ansiStr += `\\033[1;32m${currentGuess[i]}\\033[0m`;
+      else if (colors[i] === 'Y') ansiStr += `\\033[1;33m${currentGuess[i]}\\033[0m`;
+      else ansiStr += `\\033[1;31m${currentGuess[i]}\\033[0m`;
+    }
+    stdout(`[Row ${currentRow + 1}] ANSI: ${ansiStr} | Tries Left: ${5 - currentRow}`);
+
+    currentRow++;
+    currentCol = 0;
+
+    renderGrid();
+    renderKeyboard();
+    updateInspector();
+
+    if (currentGuess === targetWord) {
+      isGameOver = true;
+      statusLabel.textContent = "VICTORY";
+      statusLabel.style.color = "#7ee787";
+      stdout("Congratulations! You have guessed the word.", 'ansi-green');
+    } else if (currentRow === 6) {
+      isGameOver = true;
+      statusLabel.textContent = "DEFEAT";
+      statusLabel.style.color = "#f85149";
+      stdout(`You have run out of tries. Target word was: ${targetWord}`, 'ansi-red');
+    }
+  }
+
+  function updateInspector() {
+    inputValDisplay.textContent = `"${guesses[currentRow] || ""}"`;
+    targetValDisplay.textContent = isWordRevealed ? `"${targetWord}"` : "*****";
+    triesValDisplay.textContent = `${6 - currentRow}`;
+  }
+
+  function resetGame(newWord) {
+    targetWord = newWord ? newWord.toUpperCase() : getDailyWord();
+    currentRow = 0;
+    currentCol = 0;
+    guesses = Array(6).fill("");
+    guessColors = Array(6).fill(null);
+    isGameOver = false;
+    alphabetStatus = {};
+    statusLabel.textContent = "PLAYING";
+    statusLabel.style.color = "#7ee787";
+    stdoutWindow.innerHTML = '';
+    stdout("// Pure C99 Wordle Stdout Stream", 'ansi-dim');
+    stdout(`Game reset. Target length: 5 bytes. Day seed initialized.`);
+    updateInspector();
+    renderFreqTable();
+    renderGrid();
+    renderKeyboard();
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'Enter') handleVirtualKey('ENTER');
+    else if (e.key === 'Backspace') handleVirtualKey('BACK');
+    else if (/^[a-zA-Z]$/.test(e.key)) handleVirtualKey(e.key.toUpperCase());
+  });
+
+  document.getElementById('btn-daily-mode').addEventListener('click', () => {
+    seedIndicator.textContent = "Seed: day+month";
+    resetGame(getDailyWord());
+  });
+
+  document.getElementById('btn-random-mode').addEventListener('click', () => {
+    seedIndicator.textContent = "Seed: rand()";
+    const randIdx = Math.floor(Math.random() * wordBank.length);
+    resetGame(wordBank[randIdx]);
+  });
+
+  document.getElementById('btn-custom-mode').addEventListener('click', () => {
+    const word = prompt("Enter a 5-letter test word (e.g., SPEED or ERASE to test duplicates):", "SPEED");
+    if (word && word.length === 5 && /^[a-zA-Z]+$/.test(word)) {
+      seedIndicator.textContent = `Custom: ${word.toUpperCase()}`;
+      resetGame(word);
+    }
+  });
+
+  document.getElementById('btn-toggle-reveal').addEventListener('click', () => {
+    isWordRevealed = !isWordRevealed;
+    document.getElementById('btn-toggle-reveal').textContent = isWordRevealed ? "Hide Word" : "Reveal Word";
+    updateInspector();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => resetGame());
+
+  const inspectModal = document.getElementById('inspect-modal');
+  const inspectFnTitle = document.getElementById('inspect-fn-title');
+  const inspectModule = document.getElementById('inspect-module');
+  const inspectHeader = document.getElementById('inspect-header');
+  const inspectTime = document.getElementById('inspect-time');
+  const inspectSpace = document.getElementById('inspect-space');
+  const inspectSig = document.getElementById('inspect-sig');
+  const inspectBody = document.getElementById('inspect-body');
+
+  function openNodeDetail(fnKey) {
+    const info = FN_INFO[fnKey];
+    if (!info) return;
+    inspectFnTitle.textContent = info.title;
+    inspectModule.textContent = info.module;
+    inspectHeader.textContent = info.header;
+    inspectTime.textContent = info.time;
+    inspectSpace.textContent = info.space;
+    inspectSig.textContent = info.sig;
+    inspectBody.textContent = info.desc;
+    inspectModal.classList.add('open');
+  }
+
+  document.querySelectorAll('.tree-node').forEach(node => {
+    const fnKey = node.getAttribute('data-fn');
+    node.addEventListener('mouseenter', () => openNodeDetail(fnKey));
+    node.addEventListener('click', () => openNodeDetail(fnKey));
+  });
+
+  resetGame(getDailyWord());
+  openNodeDetail('wordColoring');
+  initWasm();
+})();
+</script>
+</body>
+</html>

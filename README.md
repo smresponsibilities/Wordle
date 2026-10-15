@@ -9,8 +9,8 @@
 
 A low-level, high-performance terminal recreation of the Wordle word-guessing game implemented in pure C with zero external libraries. Features collision-resistant dictionary hashing, color-coded ANSI character feedback, deterministic pseudo-random daily seed selection, and modular two-pass duplicate letter tracking.
 
-- **Live Interactive Simulator & Call Tree**: [https://shivammahajan.com/wordle-simulator/](https://shivammahajan.com/wordle-simulator/)
-- **Portfolio Architectural Case Study**: [https://shivammahajan.com/projects/wordle/](https://shivammahajan.com/projects/wordle/)
+Live App / Demo: [https://shivammahajan.com/Wordle/](https://shivammahajan.com/Wordle/) · [Interactive Simulator](https://shivammahajan.com/wordle-simulator/)  
+Portfolio Architecture: [https://shivammahajan.com/projects/](https://shivammahajan.com/projects/) · [Wordle Case Study](https://shivammahajan.com/projects/wordle/)
 
 ---
 
