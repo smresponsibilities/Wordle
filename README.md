@@ -4,10 +4,13 @@
 [![Compiler](https://img.shields.io/badge/Compiler-GCC%20%7C%20Clang-blue?style=for-the-badge)](https://gcc.gnu.org/)
 [![Terminal](https://img.shields.io/badge/UI-ANSI%20Escape%20Codes-black?style=for-the-badge)](https://en.wikipedia.org/wiki/ANSI_escape_code)
 [![Platforms](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-green?style=for-the-badge)](https://shivammahajan.com/projects/)
+[![Live Simulator](https://img.shields.io/badge/Live_Simulator-Interactive_Browser_Engine-brightgreen?style=for-the-badge)](https://shivammahajan.com/wordle-simulator/)
+[![Portfolio Architecture](https://img.shields.io/badge/Portfolio_Case_Study-Technical_Architecture-blue?style=for-the-badge)](https://shivammahajan.com/projects/wordle/)
 
-A low-level, high-performance terminal recreation of the Wordle word-guessing game implemented in pure C. Features collision-resistant dictionary hashing, color-coded ANSI character feedback, and modular algorithmic guess validation.
+A low-level, high-performance terminal recreation of the Wordle word-guessing game implemented in pure C with zero external libraries. Features collision-resistant dictionary hashing, color-coded ANSI character feedback, deterministic pseudo-random daily seed selection, and modular two-pass duplicate letter tracking.
 
-Live Project: [Wordle in C on Shivam Mahajan Portfolio](https://shivammahajan.com/projects/)
+- **Live Interactive Simulator & Call Tree**: [https://shivammahajan.com/wordle-simulator/](https://shivammahajan.com/wordle-simulator/)
+- **Portfolio Architectural Case Study**: [https://shivammahajan.com/projects/wordle/](https://shivammahajan.com/projects/wordle/)
 
 ---
 
